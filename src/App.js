@@ -8,6 +8,12 @@ import ListBooks from './ListBooks'
 import SearchBooks from './SearchBooks'
 
 
+const bookshelves = [
+    {key: 'currentlyReading', name: 'Currently Reading'},
+    {key: 'wantToRead', name: 'Want to Read'},
+    {key: 'read', name: 'Have Read'},
+];
+
 class BooksApp extends Component {
 
     state = {
@@ -16,11 +22,16 @@ class BooksApp extends Component {
         searchBooks: [],
     };
 
-    bookshelves = [
-        {key: 'currentlyReading', name: 'Currently Reading'},
-        {key: 'wantToRead', name: 'Want to Read'},
-        {key: 'read', name: 'Have Read'},
-    ];
+    componentDidMount() {
+        BooksAPI.getAll()
+            .then(books => {
+                this.setState({books: books})
+            })
+            .catch(error => {
+                console.log('error componentDidMount() - ' + error);
+                this.setState({error: true})
+            })
+    }
 
     // В BooksApp создаем метод moveBook, который отвечает за перемещение книги с одной книжной полки на другую.
     // Он находится наверху стека компонентов в BooksApp, так что он может получить доступ к состоянию books.
@@ -36,23 +47,26 @@ class BooksApp extends Component {
         BooksAPI.update(book, shelf)
             .then(books => {
                 console.log(books)
+            })
+            .catch(error => {
+                console.log('error moveBook - ' + error);
+                this.setState({ error: true });
             });
 
         // обновляем метод bookMove для handle, которые были добавлены из поиска и у которых нет свойства полки.
         // Этот код обновляет базу данных и отфильтровывает книгу из books.
         // Если указана полка, отличная от «none», свойство shelf добавляется в книгу, а книга добавляется в state.
 
-        let updatedBooks = [];
-        updatedBooks = this.state.books.filter( b => b.id !== book.id);
-
-        if (shelf !== 'none' ){
+        if (shelf === 'none' ){
+            this.setState(prevState => ({
+                books: prevState.books.filter(b => b.id !== book.id)
+            }));
+        } else {
             book.shelf = shelf;
-            updatedBooks = updatedBooks.concat(book)
+            this.setState(prevState => ({
+                books: prevState.books.filter(b => b.id !== book.id).concat(book)
+            }));
         }
-
-        this.setState({
-            books: updatedBooks,
-        })
     };
 
     // Создаем метод searchForBooks, который будет вызываться из компонента SearchBooksInput
@@ -82,19 +96,12 @@ class BooksApp extends Component {
         this.setState({ searchBooks: [] })
     };
 
-    componentDidMount() {
-        BooksAPI.getAll()
-            .then(books => {
-                this.setState({books: books})
-            })
-            .catch(error => {
-                console.log('error - ' + error);
-                this.setState({error: true})
-            })
-    }
-
     render() {
         const {books, searchBooks} = this.state;
+
+        if (this.state.error){
+            return <div>Network error. Please try again later.</div>;
+        }
 
         return (
             <div className={'app'}>
@@ -103,7 +110,7 @@ class BooksApp extends Component {
                     path={'/'}
                     render={() => (
                         <ListBooks
-                            bookshelves={this.bookshelves}
+                            bookshelves={bookshelves}
                             books={books}
                             onMove={this.moveBook}
                         />

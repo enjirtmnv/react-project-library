@@ -8,8 +8,9 @@ class BookshelfChanger extends Component {
     // Именно в методе handleChange мы вызываем метод onMove, передавая ему, bookIdи shelfкнига перемещается в.
 
     handleChange = event => {
-        this.setState({ value: event.target.value });
-        this.props.onMove( this.props.book, event.target.value )
+        const value = event.target.value;
+        this.setState({ value: value });
+        this.props.onMove( this.props.book, value )
     };
 
     render() {
