@@ -61,6 +61,7 @@ class BooksApp extends Component {
             this.setState(prevState => ({
                 books: prevState.books.filter(b => b.id !== book.id)
             }));
+            debugger
         } else {
             book.shelf = shelf;
             this.setState(prevState => ({
